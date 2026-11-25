@@ -170,8 +170,8 @@ class ArrangeGapWidget(IntegerGroup):
 
 class AllocationLimitWidget(IntegerGroup):
     TITLE = 'Maximum Image Size:'
-    HELPTEXT = ('The maximum image size that can be loaded (in megabytes). '
-                'Set to 0 for no limitation.')
+    HELPTEXT = ('Maximum decoded size per image, in megabytes. This is not a '
+                'total application memory limit. Set to 0 for no limitation.')
     KEY = 'Items/image_allocation_limit'
     MIN = 0
     MAX = 10000
@@ -180,7 +180,7 @@ class AllocationLimitWidget(IntegerGroup):
 class ConfirmCloseUnsavedWidget(SingleCheckboxGroup):
     TITLE = 'Confirm when closing an unsaved file:'
     HELPTEXT = (
-        'When about to close an unsaved file, should BeeRef ask for '
+        'When about to close an unsaved file, should SeaRef ask for '
         'confirmation?')
     LABEL = 'Confirm when closing'
     KEY = 'Save/confirm_close_unsaved'

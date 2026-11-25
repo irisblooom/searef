@@ -132,7 +132,8 @@ class BeeSettings(QtCore.QSettings):
                 'optimal', 'horizontal', 'vertical', 'square'),
         },
         'Items/image_allocation_limit': {
-            'default': 256,
+            # A conservative per-image cap helps avoid large accidental decodes.
+            'default': 64,
             'cast': int,
             'validate': lambda x: x >= 0,
             'post_save_callback': QtGui.QImageReader.setAllocationLimit,
@@ -176,7 +177,7 @@ class BeeSettings(QtCore.QSettings):
         """Get the value for key, or the default value specified in FIELDS.
 
         This is the method to be used for configurable settings (as
-        opposed to settings that BeeRef stores on its own.)
+        opposed to settings that SeaRef stores on its own.)
 
         This will validate and type cast the given value if 'cast' and
         'validate' are specified in the FIELDS entry for the given

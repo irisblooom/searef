@@ -3,13 +3,13 @@ requires = ["setuptools>=61.0.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["beeref*"]
+include = ["beeref*", "searef*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.html", "*.png"]
 
 [project]
-name = "BeeRef"
+name = "SeaRef"
 version = "0.3.4-dev"
 description = "A simple reference image viewer"
 readme = "README.rst"
@@ -27,10 +27,10 @@ dependencies = [
 ]
 
 [project.gui-scripts]
-beeref = "beeref.__main__:main"
+searef = "searef.__main__:main"
 
 [project.urls]
-Homepage = "https://beeref.org/"
+Upstream = "https://beeref.org/"
 Repository = "https://github.com/rbreu/beeref"
 # Documentation =
 Issues = "https://github.com/rbreu/beeref/issues"

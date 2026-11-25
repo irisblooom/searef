@@ -125,7 +125,7 @@ def main():
     app.exec()
     del bee
     del app
-    logger.debug('BeeRef closed')
+    logger.debug('SeaRef closed')
     QtCore.qInstallMessageHandler(None)
 
 

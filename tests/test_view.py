@@ -29,7 +29,7 @@ def test_init_without_filenames(open_file_mock, qapp, commandline_args):
     parent = QtWidgets.QMainWindow()
     view = BeeGraphicsView(qapp, parent)
     open_file_mock.assert_not_called()
-    assert view.parent.windowTitle() == 'BeeRef'
+    assert view.parent.windowTitle() == 'SeaRef'
     del view
 
 
@@ -93,7 +93,7 @@ def test_clear_scene(view, item):
     assert view.transform().isIdentity()
     assert view.filename is None
     view.undo_stack.clear.assert_called_once_with()
-    assert view.parent.windowTitle() == 'BeeRef'
+    assert view.parent.windowTitle() == 'SeaRef'
 
 
 def test_reset_previous_transform_when_other_item(view):
@@ -1100,28 +1100,28 @@ def test_cancel_sample_color_mode_when_multi_selection(view, item):
 def test_update_window_title_no_changes_no_filename(clear_mock, view):
     view.filename = None
     view.update_window_title()
-    assert view.parent.windowTitle() == 'BeeRef'
+    assert view.parent.windowTitle() == 'SeaRef'
 
 
 @patch('PyQt6.QtGui.QUndoStack.isClean', return_value=False)
 def test_update_window_title_changes_no_filename(clear_mock, view):
     view.filename = None
     view.update_window_title()
-    assert view.parent.windowTitle() == '[Untitled]* - BeeRef'
+    assert view.parent.windowTitle() == '[Untitled]* - SeaRef'
 
 
 @patch('PyQt6.QtGui.QUndoStack.isClean', return_value=True)
 def test_update_window_title_no_changes_filename(clear_mock, view):
     view.filename = 'test.bee'
     view.update_window_title()
-    assert view.parent.windowTitle() == 'test.bee - BeeRef'
+    assert view.parent.windowTitle() == 'test.bee - SeaRef'
 
 
 @patch('PyQt6.QtGui.QUndoStack.isClean', return_value=False)
 def test_update_window_title_changes_filename(clear_mock, view):
     view.filename = 'test.bee'
     view.update_window_title()
-    assert view.parent.windowTitle() == 'test.bee* - BeeRef'
+    assert view.parent.windowTitle() == 'test.bee* - SeaRef'
 
 
 @patch('beeref.view.BeeGraphicsView.recalc_scene_rect')
@@ -1208,6 +1208,38 @@ def test_delta_zero(pan_mock, reset_mock, view, item):
     assert view.get_scale() == 1
     reset_mock.assert_not_called()
     pan_mock.assert_not_called()
+
+
+@patch('beeref.view.BeeGraphicsView.pan')
+def test_wheel_event_smooth_trackpad_pan(pan_mock, view):
+    event = MagicMock()
+    event.pixelDelta.return_value = QtCore.QPoint(7, -12)
+    view.wheelEvent(event)
+    pan_mock.assert_called_once_with(QtCore.QPointF(-7, 12))
+    event.accept.assert_called_once_with()
+
+
+@patch('beeref.view.BeeGraphicsView.zoom')
+def test_native_trackpad_pinch(zoom_mock, view):
+    event = MagicMock()
+    event.type.return_value = QtCore.QEvent.Type.NativeGesture
+    event.gestureType.return_value = Qt.NativeGestureType.ZoomNativeGesture
+    event.value.return_value = 0.02
+    event.position.return_value = QtCore.QPointF(20, 30)
+    assert view.event(event) is True
+    zoom_mock.assert_called_once_with(20, QtCore.QPointF(20, 30))
+    event.accept.assert_called_once_with()
+
+
+@patch('beeref.view.BeeGraphicsView.pan')
+def test_native_trackpad_pan(pan_mock, view):
+    event = MagicMock()
+    event.type.return_value = QtCore.QEvent.Type.NativeGesture
+    event.gestureType.return_value = Qt.NativeGestureType.PanNativeGesture
+    event.delta.return_value = QtCore.QPointF(6, -9)
+    assert view.event(event) is True
+    pan_mock.assert_called_once_with(QtCore.QPointF(6, -9))
+    event.accept.assert_called_once_with()
 
 
 @patch('beeref.view.BeeGraphicsView.zoom')

@@ -30,6 +30,7 @@ from beeref.fileio.errors import IMG_LOADING_ERROR_MSG
 from beeref.fileio.export import exporter_registry, ImagesToDirectoryExporter
 from beeref import widgets
 from beeref.items import BeePixmapItem, BeeTextItem
+from beeref.video import YouTubeVideoItem, get_youtube_video_id
 from beeref.main_controls import MainControlsMixin
 from beeref.scene import BeeGraphicsScene
 from beeref.utils import get_file_extension_from_format, qcolor_to_hex
@@ -591,8 +592,8 @@ class BeeGraphicsView(MainControlsMixin,
             (f'<h2>{constants.APPNAME} {constants.VERSION}</h2>'
              f'<p>{constants.APPNAME_FULL}</p>'
              f'<p>{constants.COPYRIGHT}</p>'
-             f'<p><a href="{constants.WEBSITE}">'
-             f'Visit the {constants.APPNAME} website</a></p>'))
+             f'<p>Based on <a href="{constants.WEBSITE}">'
+             f'BeeRef</a>.</p>'))
 
     def on_action_debuglog(self):
         widgets.DebugLogDialog(self)
@@ -652,6 +653,13 @@ class BeeGraphicsView(MainControlsMixin,
             filter=f'Images ({formats})')
         self.do_insert_images(filenames)
 
+    def do_insert_video(self, url, scene_pos=None):
+        if scene_pos is None:
+            scene_pos = self.mapToScene(self.get_view_center())
+        item = YouTubeVideoItem(url)
+        self.undo_stack.push(
+            commands.InsertItems(self.scene, [item], scene_pos))
+
     def on_action_insert_text(self):
         self.cancel_active_modes()
         item = BeeTextItem()
@@ -703,6 +711,10 @@ class BeeGraphicsView(MainControlsMixin,
             return
         text = clipboard.text()
         if text:
+            text = text.strip()
+            if get_youtube_video_id(text):
+                self.do_insert_video(text, pos)
+                return
             item = BeeTextItem(text)
             item.setScale(1 / self.get_scale())
             self.undo_stack.push(commands.InsertItems(self.scene, [item], pos))
@@ -833,7 +845,44 @@ class BeeGraphicsView(MainControlsMixin,
         self.pan(self.mapFromScene(ref_point) - anchor)
         self.reset_previous_transform()
 
+    def handle_native_gesture(self, event):
+        if event.type() != QtCore.QEvent.Type.NativeGesture:
+            return False
+
+        gesture_type = event.gestureType()
+        if gesture_type == Qt.NativeGestureType.ZoomNativeGesture:
+            # QNativeGestureEvent.value() is an incremental scale delta.
+            self.zoom(event.value() * 1000, event.position())
+        elif gesture_type == Qt.NativeGestureType.PanNativeGesture:
+            delta = event.delta()
+            self.pan(QtCore.QPointF(delta.x(), delta.y()))
+        else:
+            return False
+
+        event.accept()
+        return True
+
+    def event(self, event):
+        if self.handle_native_gesture(event):
+            return True
+        return super().event(event)
+
+    def viewportEvent(self, event):
+        # QAbstractScrollArea sends some platform gestures to its viewport.
+        if self.handle_native_gesture(event):
+            return True
+        return super().viewportEvent(event)
+
     def wheelEvent(self, event):
+        # Touchpads often emit smooth pixel deltas rather than wheel notches.
+        # Treat these as direct canvas panning; pinch-to-zoom arrives above as
+        # a native Zoom gesture on supported Qt platforms.
+        pixel_delta = event.pixelDelta()
+        if not pixel_delta.isNull():
+            self.pan(QtCore.QPointF(-pixel_delta.x(), -pixel_delta.y()))
+            event.accept()
+            return
+
         action, inverted\
             = self.keyboard_settings.mousewheel_action_for_event(event)
 

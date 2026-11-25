@@ -61,7 +61,7 @@ if sys.platform == 'darwin':
         exe,
         name=f'{constants.APPNAME}.app',
         icon=join('beeref', 'assets', icon),
-        bundle_identifier='org.beeref.app',
+        bundle_identifier='org.searef.app',
         version=f'{constants.VERSION}',
         info_plist={
             'CFBundleDocumentTypes': [

@@ -1,9 +1,9 @@
 [Desktop Entry]
-Name=BeeRef
+Name=SeaRef
 GenericName=Image Viewer
 Comment=A simple reference image viewer
 Terminal=false
-Exec=/home/yourname/path/to/BeeRef-0.3.4-dev.appimage
+Exec=/home/yourname/path/to/SeaRef-0.3.4-dev.appimage
 Type=Application
 Icon=/home/yourname/path/to/logo.png
 

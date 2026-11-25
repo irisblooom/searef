@@ -20,6 +20,7 @@ from PyQt6.QtCore import Qt
 
 from beeref import commands, widgets
 from beeref.items import BeePixmapItem
+from beeref.video import get_youtube_video_id
 from beeref import fileio
 
 
@@ -101,7 +102,15 @@ class MainControlsMixin:
                         and fileio.is_bee_file(path.toLocalFile())):
                     self.control_target.open_from_file(path.toLocalFile())
                     return
-            self.control_target.do_insert_images(mimedata.urls(), pos)
+            urls = mimedata.urls()
+            if len(urls) == 1:
+                url = urls[0].toString()
+                if get_youtube_video_id(url):
+                    scene_pos = self.control_target.mapToScene(pos)
+                    self.control_target.do_insert_video(url, scene_pos)
+                    event.acceptProposedAction()
+                    return
+            self.control_target.do_insert_images(urls, pos)
         elif mimedata.hasImage():
             img = QtGui.QImage(mimedata.imageData())
             item = BeePixmapItem(img)

@@ -485,6 +485,19 @@ def test_change_text():
     assert item.toPlainText() == 'foo'
 
 
+def test_resize_text_box():
+    item = BeeTextItem('some text')
+    old_pos = QtCore.QPointF(1, 2)
+    new_pos = QtCore.QPointF(10, 20)
+    command = commands.ResizeTextBox(item, -1, 90, old_pos, new_pos)
+    command.redo()
+    assert item.textWidth() == 90
+    assert item.pos() == new_pos
+    command.undo()
+    assert item.textWidth() == -1
+    assert item.pos() == old_pos
+
+
 def test_change_opacity(view):
     item1 = BeePixmapItem(QtGui.QImage())
     item1.setOpacity(0.5)

@@ -26,6 +26,7 @@ import rpack
 from beeref import commands
 from beeref.config import BeeSettings
 from beeref.items import item_registry, BeeErrorItem, sort_by_filename
+from beeref.video import YouTubeVideoItem  # noqa: F401
 from beeref.selection import MultiSelectItem, RubberbandItem
 
 

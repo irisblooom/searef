@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with BeeRef.  If not, see <https://www.gnu.org/licenses/>.
 
-APPNAME = 'BeeRef'
+APPNAME = 'SeaRef'
 APPNAME_FULL = f'{APPNAME} Reference Image Viewer'
 VERSION = '0.3.4-dev'
 WEBSITE = 'https://github.com/rbreu/beeref'
@@ -40,7 +40,7 @@ COLORS = {
     'Disabled:Light': (0, 0, 0, 0),
     'Disabled:Text': (140, 140, 140),
 
-    # BeeRef specific:
+    # SeaRef specific:
     'Scene:Selection': (116, 234, 231),
     'Scene:Canvas': (60, 60, 60),
     'Scene:Text': (200, 200, 200),

@@ -146,6 +146,7 @@ class SelectableMixin(BaseItemMixin):
     SCALE_MODE = 1
     ROTATE_MODE = 2
     FLIP_MODE = 3
+    TEXT_RESIZE_MODE = 4
 
     def init_selectable(self):
         self.setAcceptHoverEvents(True)

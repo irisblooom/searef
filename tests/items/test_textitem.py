@@ -61,7 +61,55 @@ def test_set_pos_center_when_rotated(qapp):
 
 def test_get_extra_save_data(qapp):
     item = BeeTextItem('foo bar')
-    assert item.get_extra_save_data() == {'text': 'foo bar'}
+    assert item.get_extra_save_data() == {
+        'text': 'foo bar',
+        'text_width': -1,
+    }
+
+
+def test_text_width_wraps_text(qapp):
+    text = 'A long line of text that should wrap into several lines'
+    item = BeeTextItem(text)
+    original_height = item.boundingRect().height()
+    item.setTextWidth(80)
+    assert item.textWidth() == 80
+    assert item.boundingRect().height() > original_height
+
+
+def test_resize_text_box_keeps_opposite_corner_fixed(view):
+    item = BeeTextItem('A long line of text that should wrap')
+    view.scene.addItem(item)
+    anchor_index = 2
+    anchor = item.mapToParent(item.corners[anchor_index])
+    item.resize_text_box(60, anchor_index, anchor)
+    assert item.textWidth() == 60
+    assert item.mapToParent(item.corners[anchor_index]) == anchor
+
+
+def test_dragging_text_corner_resizes_and_wraps_with_undo(view):
+    text = 'A long line of text that should wrap into several lines'
+    item = BeeTextItem(text)
+    view.scene.addItem(item)
+    item.setSelected(True)
+    corner = item.corners[2]
+
+    press = MagicMock()
+    press.button.return_value = Qt.MouseButton.LeftButton
+    press.modifiers.return_value = Qt.KeyboardModifier.NoModifier
+    press.pos.return_value = corner
+    item.mousePressEvent(press)
+    assert item.active_mode == item.TEXT_RESIZE_MODE
+
+    move = MagicMock()
+    move.pos.return_value = QtCore.QPointF(80, corner.y())
+    item.mouseMoveEvent(move)
+    assert item.textWidth() == 80
+
+    release = MagicMock()
+    item.mouseReleaseEvent(release)
+    assert item.active_mode is None
+    view.undo_stack.undo()
+    assert item.textWidth() == -1
 
 
 @patch('beeref.items.BeeTextItem.boundingRect')

@@ -639,7 +639,7 @@ class BeeTextItem(BeeItemMixin, QtWidgets.QGraphicsTextItem):
 
     TYPE = 'text'
 
-    def __init__(self, text=None, **kwargs):
+    def __init__(self, text=None, text_width=-1, **kwargs):
         super().__init__(text or "Text")
         self.save_id = None
         logger.debug(f'Initialized {self}')
@@ -648,6 +648,8 @@ class BeeTextItem(BeeItemMixin, QtWidgets.QGraphicsTextItem):
         self.is_editable = True
         self.edit_mode = False
         self.setDefaultTextColor(QtGui.QColor(*COLORS['Scene:Text']))
+        if text_width != -1:
+            self.setTextWidth(text_width)
 
     @classmethod
     def create_from_data(cls, **kwargs):
@@ -660,7 +662,10 @@ class BeeTextItem(BeeItemMixin, QtWidgets.QGraphicsTextItem):
         return (f'Text "{txt}"')
 
     def get_extra_save_data(self):
-        return {'text': self.toPlainText()}
+        return {
+            'text': self.toPlainText(),
+            'text_width': self.textWidth(),
+        }
 
     def contains(self, point):
         return self.boundingRect().contains(point)
@@ -677,7 +682,7 @@ class BeeTextItem(BeeItemMixin, QtWidgets.QGraphicsTextItem):
         self.paint_selectable(painter, option, widget)
 
     def create_copy(self):
-        item = BeeTextItem(self.toPlainText())
+        item = BeeTextItem(self.toPlainText(), self.textWidth())
         item.setPos(self.pos())
         item.setZValue(self.zValue())
         item.setScale(self.scale())
@@ -713,6 +718,73 @@ class BeeTextItem(BeeItemMixin, QtWidgets.QGraphicsTextItem):
 
     def has_selection_handles(self):
         return super().has_selection_handles() and not self.edit_mode
+
+    def set_text_box_state(self, width, position):
+        self.prepareGeometryChange()
+        self.setTextWidth(width)
+        self.setPos(position)
+
+    def resize_text_box(self, width, anchor_index, anchor_parent_pos):
+        """Resize the wrap width while keeping the opposite corner fixed."""
+
+        width = max(40, width)
+        self.prepareGeometryChange()
+        self.setTextWidth(width)
+        anchor_pos = self.mapToParent(self.corners[anchor_index])
+        self.setPos(self.pos() + anchor_parent_pos - anchor_pos)
+        self.update()
+
+    def mousePressEvent(self, event):
+        if (self.isSelected()
+                and self.has_selection_handles()
+                and event.button() == Qt.MouseButton.LeftButton
+                and not event.modifiers()
+                & Qt.KeyboardModifier.ControlModifier
+                and event.pos() not in self.select_handle_free_center()):
+            for corner_index, corner in enumerate(self.corners):
+                if self.get_scale_bounds(corner).contains(event.pos()):
+                    self.active_mode = self.TEXT_RESIZE_MODE
+                    self.resize_corner_index = corner_index
+                    self.resize_anchor_index = (corner_index + 2) % 4
+                    self.resize_anchor_parent_pos = self.mapToParent(
+                        self.corners[self.resize_anchor_index])
+                    self.resize_original_width = self.textWidth()
+                    self.resize_original_pos = self.pos()
+                    event.accept()
+                    return
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self.active_mode == self.TEXT_RESIZE_MODE:
+            anchor = self.corners[self.resize_anchor_index]
+            if self.resize_corner_index in (0, 3):
+                width = anchor.x() - event.pos().x()
+            else:
+                width = event.pos().x() - anchor.x()
+            self.resize_text_box(
+                width,
+                self.resize_anchor_index,
+                self.resize_anchor_parent_pos)
+            event.accept()
+            return
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self.active_mode == self.TEXT_RESIZE_MODE:
+            self.active_mode = None
+            width = self.textWidth()
+            position = self.pos()
+            if (width != self.resize_original_width
+                    or position != self.resize_original_pos):
+                self.scene().undo_stack.push(commands.ResizeTextBox(
+                    self,
+                    self.resize_original_width,
+                    width,
+                    self.resize_original_pos,
+                    position))
+            event.accept()
+            return
+        super().mouseReleaseEvent(event)
 
     def keyPressEvent(self, event):
         if (event.key() in (Qt.Key.Key_Enter, Qt.Key.Key_Return)

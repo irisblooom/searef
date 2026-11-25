@@ -326,6 +326,23 @@ class ChangeText(QtGui.QUndoCommand):
         self.item.setPlainText(self.old_text)
 
 
+class ResizeTextBox(QtGui.QUndoCommand):
+
+    def __init__(self, item, old_width, new_width, old_pos, new_pos):
+        super().__init__('Resize text box')
+        self.item = item
+        self.old_width = old_width
+        self.new_width = new_width
+        self.old_pos = old_pos
+        self.new_pos = new_pos
+
+    def redo(self):
+        self.item.set_text_box_state(self.new_width, self.new_pos)
+
+    def undo(self):
+        self.item.set_text_box_state(self.old_width, self.old_pos)
+
+
 class ChangeOpacity(QtGui.QUndoCommand):
     """Change opacity on images."""
 

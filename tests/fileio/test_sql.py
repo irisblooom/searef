@@ -219,7 +219,10 @@ def test_sqliteio_write_inserts_new_text_item(tmpfile, view):
     assert result[3] == 1.3
     assert result[4] == 33
     assert result[5] == -1
-    assert json.loads(result[6]) == {'text': 'foo bar'}
+    assert json.loads(result[6]) == {
+        'text': 'foo bar',
+        'text_width': -1,
+    }
     assert result[7] == 'text'
     assert result[8] is None
     assert result[9] is None
@@ -326,7 +329,10 @@ def test_sqliteio_write_updates_existing_text_item(tmpfile, view):
     assert result[3] == 0.7
     assert result[4] == 100
     assert result[5] == -1
-    assert json.loads(result[6]) == {'text': 'updated'}
+    assert json.loads(result[6]) == {
+        'text': 'updated',
+        'text_width': -1,
+    }
     assert result[7] is None
 
 
@@ -525,7 +531,7 @@ def test_sqliteio_read_reads_readonly_text_item(tmpfile, view):
           '(type, x, y, z, scale, rotation, flip, data) '
           'VALUES (?, ?, ?, ?, ?, ?, ?, ?) ',
           ('text', 22.2, 33.3, 0.22, 3.4, 45, -1,
-           json.dumps({'text': 'foo bar'})))
+           json.dumps({'text': 'foo bar', 'text_width': 100})))
     io.connection.commit()
     del io
 
@@ -544,6 +550,7 @@ def test_sqliteio_read_reads_readonly_text_item(tmpfile, view):
     assert item.rotation() == 45
     assert item.flip() == -1
     assert item.toPlainText() == 'foo bar'
+    assert item.textWidth() == 100
     assert view.scene.items_to_add.empty() is True
 
 
